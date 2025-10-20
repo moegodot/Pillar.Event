@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace Pillar.Event;
 
 /// <summary>
@@ -5,18 +7,18 @@ namespace Pillar.Event;
 /// </summary>
 /// <typeparam name="TEventArgs">事件参数类型</typeparam>
 /// <typeparam name="TSender">事件发送者类型</typeparam>
-public readonly struct ListEvent<TSender,TEventArgs>() where TEventArgs : EventArgs
+public sealed class ListEvent<TSender,TEventArgs> : IEventSource<TSender,TEventArgs> where TEventArgs : EventArgs
 {
     private readonly List<Runtime.EventHandler<TSender,TEventArgs>> _handlers = [];
 
-    public void ClearAllHandlers()
+    public void ClearHandlers()
     {
         _handlers.Clear();
     }
 
-    public IEnumerable<Exception> Fire(TSender source, TEventArgs @event, bool ignoreError = false)
+    public IEnumerable<Exception>? Fire(TSender source, TEventArgs @event, bool ignoreError = false)
     {
-        List<Exception> exceptions = ignoreError ? [] : null!;
+        List<Exception>? exceptions = ignoreError ? [] : null;
         foreach (var t in _handlers)
         {
             try
@@ -27,7 +29,7 @@ public readonly struct ListEvent<TSender,TEventArgs>() where TEventArgs : EventA
             {
                 if (!ignoreError)
                     throw;
-                exceptions.Add(ex);
+                exceptions!.Add(ex);
             }
         }
 

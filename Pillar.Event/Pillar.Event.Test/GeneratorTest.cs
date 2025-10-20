@@ -17,7 +17,7 @@ public partial class GeneratorTest
     {
         public partial class InnerInner
         {
-            [EmitEvent] private readonly ListEvent<int?, EventArgs> _innerEvent;
+            [EmitEvent] private readonly ListEvent<int?, EventArgs> _innerEvent = new();
         }
     }
     
