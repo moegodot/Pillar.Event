@@ -1,6 +1,6 @@
 namespace Pillar.Event;
 
-[AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]
+[AttributeUsage(AttributeTargets.Field)]
 public sealed class EmitEventAttribute : Attribute
 {
 }

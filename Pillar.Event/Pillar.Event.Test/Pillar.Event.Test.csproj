@@ -6,7 +6,19 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <IsPackable>false</IsPackable>
+        
+        <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+        <CompilerGeneratedFilesOutputPath>Generated</CompilerGeneratedFilesOutputPath>
     </PropertyGroup>
+    
+    <Target Name="CleanSourceGeneratedFiles" BeforeTargets="BeforeBuild" DependsOnTargets="$(BeforeBuildDependsOn)">
+        <RemoveDir Directories="Generated" />
+    </Target>
+
+    <ItemGroup>
+        <Compile Remove="Generated\**" />
+        <Content Include="Generated\**" />
+    </ItemGroup>
 
     <ItemGroup>
         <PackageReference Include="coverlet.collector" Version="6.0.2"/>
@@ -16,7 +28,9 @@
         <PackageReference Include="NUnit3TestAdapter" Version="4.6.0"/>
         <Using Include="NUnit.Framework"/>
         <ProjectReference Include="..\Pillar.Event\Pillar.Event.csproj" />
-        <ProjectReference Include="..\PillarOfPillar.Event\PillarOfPillar.Event.csproj" />
+        <ProjectReference Include="..\PillarOfPillar.Event\PillarOfPillar.Event.csproj"
+                          OutputItemType="Analyzer"
+                          ReferenceOutputAssembly="false" />
     </ItemGroup>
 
 </Project>

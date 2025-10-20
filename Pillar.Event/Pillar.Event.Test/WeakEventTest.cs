@@ -1,20 +1,74 @@
-﻿namespace Pillar.Event.Test;
+﻿using System.CodeDom.Compiler;
+using System.Runtime.CompilerServices;
 
-public class WeakEventTest
+namespace Pillar.Event.Test;
+
+public partial class WeakEventTest
 {
-
-    private readonly WeakEvent<int, EventArgs> _weakEvent = new();
-
-    private readonly WeakEvent<int, EventArgs> _a = new(), _n = new();
+    [EmitEvent] protected readonly WeakEvent<EventArgs?, EventArgs> Test = new();
     
-    [SetUp]
-    public void Setup()
+    [Test]
+    public void GeneratorTest()
     {
+        // 看看我们的生成器还工作吗？
+        _Event += (_,_) => { };
+        TestEvent += (_,_) => { };
+        intEvent += (_,_) => { };
+    }
+    
+    [EmitEvent]
+    private readonly WeakEvent<EventArgs, EventArgs> _weakEvent = new();
+
+    [EmitEvent] private readonly WeakEvent<int, EventArgs> _a = new();
+    
+    [Test]
+    public void TestFireForPrimitiveType()
+    {
+        bool called = false;
+        A += (sender, args) =>
+        {
+            Assert.That(called, Is.False);
+            called = true;
+            Assert.That(sender, Is.EqualTo(1));
+            Assert.That(args, Is.EqualTo(EventArgs.Empty));
+        };
+        _a.Fire(1, EventArgs.Empty);
+    }
+    
+    [Test]
+    public void TestFireForUserType()
+    {
+        bool called = false;
+        WeakEvent += (sender, args) =>
+        {
+            Assert.That(called, Is.False);
+            called = true;
+            Assert.That(sender, Is.EqualTo(EventArgs.Empty));
+            Assert.That(args, Is.EqualTo(EventArgs.Empty));
+        };
+        _weakEvent.Fire(EventArgs.Empty, EventArgs.Empty);
     }
 
-    [Test]
-    public void Test1()
+    static void Fail(EventArgs sender, EventArgs args)
     {
-        Assert.Pass();
+        Assert.Fail();
+    }
+    
+    [Test]
+    public void TestRemove()
+    {
+        bool called = false;
+        Action<EventArgs,EventArgs> @raef = (EventArgs sender,EventArgs args) =>
+        {
+            Assert.That(called, Is.False);
+            called = true;
+            Assert.Multiple(() =>
+            {
+                Assert.That(sender, Is.EqualTo(EventArgs.Empty));
+                Assert.That(args, Is.EqualTo(EventArgs.Empty));
+            });
+        };
+        WeakEvent += Fail;
+        _weakEvent.Fire(EventArgs.Empty, EventArgs.Empty);
     }
 }
