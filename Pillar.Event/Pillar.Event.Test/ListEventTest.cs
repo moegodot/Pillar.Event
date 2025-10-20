@@ -7,12 +7,6 @@ public partial class ListEventTest
 
     [EmitEvent]
     private readonly ListEvent<int?, EventArgs> _a = new(), _b = new();
-
-    [Test]
-    public static void Pass()
-    {
-        Assert.Pass();
-    }
     
     [Test]
     public void TestFireForPrimitiveType()

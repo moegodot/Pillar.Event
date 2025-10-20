@@ -5,13 +5,13 @@ namespace Pillar.Event.Test
     partial class GeneratorTest
     {
         [System.CodeDom.Compiler.GeneratedCode("PillarOfPillar.Event.EventGenerator","1.0.0")]
-        public event Pillar.Event.Runtime.EventHandler<global::System.EventArgs,global::System.EventArgs> @WithoutUnderLineEventAndUpperEvent
+        public event Pillar.Event.Runtime.EventHandler<int?,global::System.EventArgs> @A
             {
             add{
-                @WithoutUnderLineEventAndUpper.Register(value);
+                @_a.Register(value);
             }
             remove{
-                @WithoutUnderLineEventAndUpper.Unregister(value);
+                @_a.Unregister(value);
             }
         }
     }

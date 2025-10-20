@@ -18,7 +18,7 @@ public class EventGenerator : IIncrementalGenerator
 	{
 		if (!Debugger.IsAttached) 
 		{ 
-			Debugger.Launch(); 
+			//Debugger.Launch(); 
 		} 
 	}
 	
@@ -35,14 +35,11 @@ public class EventGenerator : IIncrementalGenerator
 	public void Initialize(IncrementalGeneratorInitializationContext context)
 	{
 		var provider = context.SyntaxProvider.ForAttributeWithMetadataName(
-			FullyQualifiedMetadataName,
-			(t,_) => true,
-			((syntaxContext, token) =>
-			{
-				return GetClassDeclarationForSourceGen(syntaxContext);
-			})
-		).Where(t => t.attributeFound)
-		.Select((t, _) => t.Item1);
+				FullyQualifiedMetadataName,
+				(_, _) => true,
+				(syntaxContext, _) => GetClassDeclarationForSourceGen(syntaxContext)
+			).Where(t => t is not null)
+			.Select((t, _) => t!);
 		context.RegisterSourceOutput(context.CompilationProvider.Combine(provider.Collect()),
 									 (ctx, t) => GenerateCode(ctx, t.Left, t.Right));
 	}
@@ -52,7 +49,7 @@ public class EventGenerator : IIncrementalGenerator
 	/// </summary>
 	/// <param name="context">Syntax context, based on CreateSyntaxProvider predicate</param>
 	/// <returns>The specific cast and whether the attribute was found.</returns>
-	private static (FieldDeclarationSyntax, bool attributeFound) GetClassDeclarationForSourceGen(
+	private static VariableDeclaratorSyntax? GetClassDeclarationForSourceGen(
 		GeneratorAttributeSyntaxContext context)
 	{
 		// Go through all attributes of the class.
@@ -62,7 +59,7 @@ public class EventGenerator : IIncrementalGenerator
 			
 			if (name is null)
 			{
-				return (null!, false);
+				return null;
 			}
 
 			if (!name.StartsWith("global::"))
@@ -72,18 +69,18 @@ public class EventGenerator : IIncrementalGenerator
 
 			if (name != OverQualifiedAttributeName)
 			{
-				return (null!, false);
+				return null;
 			}
 
-			if (context.TargetNode.Parent?.Parent is not FieldDeclarationSyntax fieldDeclarationSyntax)
+			if (context.TargetNode is not VariableDeclaratorSyntax variableDeclaratorSyntax)
 			{
-				return (null!, false);
+				return null;
 			}
 
-			return (fieldDeclarationSyntax, true);
+			return variableDeclaratorSyntax;
 		}
 
-		return (null!, false);
+		return null;
 	}
 
 	public static string GetEventPropertyName(string fieldName)
@@ -97,21 +94,16 @@ public class EventGenerator : IIncrementalGenerator
 		return $"{fieldName}Event";
 	}
 
-	/// <summary>
-	/// Generate code action.
-	/// It will be executed on specific nodes (ClassDeclarationSyntax annotated with the [Report] attribute) changed by the user.
-	/// </summary>
-	/// <param name="context">Source generation context used to add source files.</param>
-	/// <param name="compilation">Compilation used to provide access to the Semantic Model.</param>
-	/// <param name="fieldDeclarationSyntaxes">Nodes annotated with the [Report] attribute that trigger the generate action.</param>
 	private static void GenerateCode(SourceProductionContext context, Compilation compilation, 
-		ImmutableArray<FieldDeclarationSyntax> fieldDeclarationSyntaxes)
+		ImmutableArray<VariableDeclaratorSyntax> variableDeclaratorSyntaxes)
 	{
 		try
 		{
 			// Go through all filtered class declarations.
-			foreach (var fieldDeclarationSyntax in fieldDeclarationSyntaxes)
+			foreach (var declarator in variableDeclaratorSyntaxes)
 			{
+				var fieldDeclarationSyntax = (FieldDeclarationSyntax)declarator.Parent!.Parent!;
+				
 				// We need to get semantic model of the class to retrieve metadata.
 				var semanticModel = compilation.GetSemanticModel(fieldDeclarationSyntax.SyntaxTree);
 
@@ -121,12 +113,24 @@ public class EventGenerator : IIncrementalGenerator
 					continue;
 				}
 
+				string nestedClassName = string.Empty;
+				string openNestedClass = string.Empty;
+				string closeNestedClass = string.Empty;
+				INamedTypeSymbol? containingType = fieldSymbol.ContainingType;
+				while (containingType != null)
+				{
+					nestedClassName = $"{containingType.Name}.{nestedClassName}";
+					openNestedClass = $" partial class {containingType.Name} {{ {openNestedClass} ";
+					closeNestedClass += "}";
+					containingType = containingType.ContainingType;
+				}
+				
 				var namespaceName = fieldSymbol.ContainingNamespace.ToDisplayString();
 
 				var variable = fieldDeclarationSyntax.Declaration;
 
 				var genericNames = variable.ChildNodes().Where(node => node is GenericNameSyntax).ToArray();
-				
+
 				if (genericNames.Length != 1)
 				{
 					throw new Exception("Can not emit events that GenericNameSyntax.Length != 1");
@@ -135,44 +139,44 @@ public class EventGenerator : IIncrementalGenerator
 				var genericName = (GenericNameSyntax)genericNames.First()!;
 				var arguments = genericName.TypeArgumentList.ChildNodes()
 					.OfType<TypeSyntax>()
-					.Select(node => new Tuple<ISymbol?, SyntaxNode>(semanticModel.GetSymbolInfo(node).Symbol,node))
+					.Select(node => new Tuple<ISymbol?, SyntaxNode>(semanticModel.GetSymbolInfo(node).Symbol, node))
 					.SkipWhile(symbol => symbol.Item1 is null)
 					.Select(symbol => $"{symbol.Item1!.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}");
 
 				var fullyArgumentList = string.Join(",", arguments);
-				
-				foreach (var rawDeclarator in variable.ChildNodes().Where(node => node is VariableDeclaratorSyntax))
-				{
-					var declarator = (VariableDeclaratorSyntax) rawDeclarator;
-					var fieldName = declarator.Identifier.ValueText;
-					
-					var eventName = GetEventPropertyName(fieldName);
-					
-					var className = ((ClassDeclarationSyntax) fieldDeclarationSyntax.Parent!).Identifier.Text;
 
-					// Build up the source code
-					var code = $$"""
-                                 // <auto-generated/>
-                                 namespace {{namespaceName}}{
-                                 public partial class {{className}}
-                                 {
-                                 [System.CodeDom.Compiler.GeneratedCode("{{GeneratorName}}","{{GeneratorVersion}}")]
-                                 public event {{EventHandlerName}}<{{fullyArgumentList}}> @{{eventName}} {
-                                 			add{
-                                 				@{{fieldName}}.Register(value);
-                                 			}
-                                 			remove{
-                                 				@{{fieldName}}.Unregister(value);
-                                 			}
-                                 		}
-                                 }
-                                 }
+				var fieldName = declarator.Identifier.ValueText;
 
-                                 """;
+				var eventName = GetEventPropertyName(fieldName);
 
-					context.AddSource($"{namespaceName}.{className}.{fieldName.Replace('@',' ')}.event.g.cs",
-									  SourceText.From(code, Encoding.UTF8));
-				}
+				var className = ((ClassDeclarationSyntax)fieldDeclarationSyntax.Parent!).Identifier.Text;
+
+				// Build up the source code
+				var code = $$"""
+				             // <auto-generated/>
+				             namespace {{namespaceName}}
+				             {
+				                 {{openNestedClass}}
+				                 partial class {{className}}
+				                 {
+				                     [System.CodeDom.Compiler.GeneratedCode("{{GeneratorName}}","{{GeneratorVersion}}")]
+				                     public event {{EventHandlerName}}<{{fullyArgumentList}}> @{{eventName}}
+				                         {
+				                         add{
+				                             @{{fieldName}}.Register(value);
+				                         }
+				                         remove{
+				                             @{{fieldName}}.Unregister(value);
+				                         }
+				                     }
+				                 }
+				                 {{closeNestedClass}}
+				             }
+
+				             """;
+
+				context.AddSource($"{namespaceName}.{nestedClassName}{className}.{fieldName.Replace('@', ' ')}.event.g.cs",
+					SourceText.From(code, Encoding.UTF8));
 			}
 		}
 		catch (Exception ex)

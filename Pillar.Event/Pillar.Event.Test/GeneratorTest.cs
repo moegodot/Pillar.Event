@@ -10,6 +10,17 @@ public partial class GeneratorTest
     [EmitEvent] private readonly WeakEvent<EventArgs?, EventArgs> @int = new();
     [EmitEvent] protected readonly WeakEvent<EventArgs?, EventArgs> WithoutUnderLineEventAndUpper = new();
     
+    [EmitEvent]
+    private readonly ListEvent<int?, EventArgs> _a = new(), _b = new();
+    
+    public partial class Inner
+    {
+        public partial class InnerInner
+        {
+            [EmitEvent] private readonly ListEvent<int?, EventArgs> _innerEvent;
+        }
+    }
+    
     [Test]
     public void GenerateTest()
     {
@@ -20,5 +31,8 @@ public partial class GeneratorTest
         _Event += (_,_) => { };
         intEvent += (_,_) => { };
         WithoutUnderLineEventAndUpperEvent += (_,_) => { };
+        A += (_,_) => { };
+        B += (_,_) => { };
+        Assert.Pass("SourceGenerator seems well done.");
     }
 }
