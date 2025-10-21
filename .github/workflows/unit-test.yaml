@@ -1,0 +1,23 @@
+name: UnitTest
+
+on: [push]
+
+jobs:
+  build-and-upload:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, ubuntu-24.04-arm, macos-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: "9.0.x"
+      - name: build
+        run: |
+          dotnet build ./Pillar.Event/Pillar.Event.sln
+      - name: test
+        run: |
+          dotnet test ./Pillar.Event/Pillar.Event.sln
