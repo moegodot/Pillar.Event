@@ -41,6 +41,9 @@ public class SortedEvent<TSender,TEventArgs> : IEventSource<TSender,TEventArgs> 
         errs = Source.Fire(source, @event, ignoreError);
         exceptions = exceptions?.Concat(errs!);
         @event.NextEventSort();
+        
+        errs = Source.Fire(source, @event, ignoreError);
+        exceptions = exceptions?.Concat(errs!);
 
         return exceptions;
     }

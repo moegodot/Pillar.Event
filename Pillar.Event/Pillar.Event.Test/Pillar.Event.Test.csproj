@@ -28,9 +28,14 @@
         <PackageReference Include="NUnit3TestAdapter" Version="4.6.0"/>
         <Using Include="NUnit.Framework"/>
         <ProjectReference Include="..\Pillar.Event\Pillar.Event.csproj" />
+        
+        <!--
         <ProjectReference Include="..\PillarOfPillar.Event\PillarOfPillar.Event.csproj"
                           OutputItemType="Analyzer"
                           ReferenceOutputAssembly="false" />
+                          -->
+        <PackageReference Include="PillarOfPillar.Event" Version="1.0.0"
+                          PrivateAssets="all" IncludeAssets="analyzers" />
     </ItemGroup>
 
 </Project>

@@ -1,12 +1,10 @@
 using System;
-using System.CodeDom.Compiler;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace PillarOfPillar.Event;
@@ -21,7 +19,7 @@ public class EventGenerator : IIncrementalGenerator
 	
 	public EventGenerator()
 	{
-		GeneratedCodeAttribute = Helper.GetGeneratedAttribute(typeof(EventGenerator));
+		GeneratedCodeAttribute = Helper.GetGeneratedCodeAttribute(typeof(EventGenerator));
 		GeneratorHitName = Helper.GetHintNameOfGenerator(typeof(EventGenerator));
 		if (!Debugger.IsAttached) 
 		{ 
@@ -133,7 +131,7 @@ public class EventGenerator : IIncrementalGenerator
 
 				var eventName = GetEventPropertyName(declaratorName);
 
-				Builder builder = new();
+				CSharpBuilder builder = new();
 				builder.EnterNamespace(declaratorSymbol);
 				builder.EnterNamedType(declaratorSymbol);
 				
