@@ -1,4 +1,6 @@
-﻿namespace Pillar.Event;
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace Pillar.Event;
 
 /// <summary>
 ///     非线程安全的,使用弱引用的事件源.
@@ -13,7 +15,7 @@ public sealed class WeakEvent<TSender,TEventArgs>() : IEventSource<TSender,TEven
     {
         _handlers.Clear();
     }
-
+    
     public IEnumerable<Exception>? Fire(TSender source, TEventArgs @event, bool ignoreError = false)
     {
         List<Exception>? exceptions = ignoreError ? [] : null;
