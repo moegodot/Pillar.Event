@@ -4,6 +4,19 @@
         <TargetFramework>net9.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        
+        <RootNamespace>Pillar.Event</RootNamespace>
+        <PackageId>MoeDotKawayi.Pillar.Event</PackageId>
+        <Description>A set class to help raise events.</Description>
+
+        <Authors>MoeGodot</Authors>
+        <Copyright>Copyright © 2025 MoeGodot</Copyright>
+
+        <RepositoryUrl>https://github.com/moegodot/Pillar.Event</RepositoryUrl>
+        <PackageProjectUrl>https://github.com/moegodot/Pillar.Event</PackageProjectUrl>
+
+        <Version>1.0.0</Version>
+        <PackageLicenseExpression>GPL-3.0-or-later</PackageLicenseExpression>
     </PropertyGroup>
 
 </Project>

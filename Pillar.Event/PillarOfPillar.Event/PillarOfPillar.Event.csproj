@@ -13,7 +13,7 @@
         <IncludeBuildOutput>false</IncludeBuildOutput>
 
         <RootNamespace>PillarOfPillar.Event</RootNamespace>
-        <PackageId>PillarOfPillar.Event</PackageId>
+        <PackageId>MoeDotKawayi.PillarOfPillar.Event</PackageId>
         <Description>The SourceGenerator of Pillar.Event</Description>
 
         <Authors>MoeGodot</Authors>
