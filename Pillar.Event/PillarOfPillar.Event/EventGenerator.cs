@@ -60,7 +60,7 @@ public class EventGenerator : IIncrementalGenerator
 			
 			if (name is null)
 			{
-				return null;
+				continue;
 			}
 
 			if (!name.StartsWith("global::"))
@@ -70,12 +70,12 @@ public class EventGenerator : IIncrementalGenerator
 
 			if (name != OverQualifiedAttributeName)
 			{
-				return null;
+				continue;
 			}
 
 			if (context.TargetNode is not VariableDeclaratorSyntax variableDeclaratorSyntax)
 			{
-				return null;
+				continue;
 			}
 
 			return variableDeclaratorSyntax;
